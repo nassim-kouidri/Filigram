@@ -1,0 +1,145 @@
+package com.Controller;
+
+import java.util.List;
+import java.util.Optional;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+import com.Modele.Comment;
+import com.Modele.Posts;
+import com.Repository.CommentRepository;
+import com.Repository.PostsRepository;
+import com.Service.CommentsService;
+import com.Service.PostsService;
+
+
+
+@RestController
+@RequestMapping("/api")
+@CrossOrigin("http://localhost:3000/")
+public class PostsController {
+
+	@Autowired
+	PostsService postsService;
+	@Autowired
+	CommentsService commentsService;
+	@Autowired
+	PostsRepository postsRepository;
+	@Autowired
+	CommentRepository commentRepository;
+
+	Posts post;
+	
+	Comment comment;
+	
+
+	
+	@GetMapping("/Post")
+	public Iterable<Posts> getAllPost(){
+		return postsService.getAllPost();
+	}
+	
+	@GetMapping("/getNbrPost/{id}")
+	public int getNbrPost(@PathVariable (value = "id") int id){
+		return postsService.getNbrPost(id);
+	}
+	
+//	@PostMapping("/addPost")
+//	public Posts createPost(@RequestBody Posts post) {
+//		return postsService.savePost(post);
+//	}
+	
+	@PostMapping("/addComment")
+	public Comment createComment(@RequestBody Comment comment) {
+		return commentsService.saveComment(comment);
+	}
+	
+	@PostMapping("/posts/{postId}/comments")
+	public Comment createComment(@PathVariable (value = "postId") int postId,
+	               @RequestBody Comment comment) {
+	  return postsRepository.findById(postId).map(post -> {
+	    comment.setPosts(post);
+	    return commentRepository.save(comment);
+	  }).orElseThrow();
+	}
+	
+	
+	@GetMapping("/Post/{idPost}")
+	public Posts getPost(@PathVariable("idPost") final int idPost) {
+		Optional<Posts> post = postsService.getPost(idPost);
+		if(post.isPresent()) {
+			return post.get();
+		} else {
+			return null;
+		}
+	}
+	
+	@DeleteMapping("/deletePost/{idPost}")
+	public void deletePost(@PathVariable("idPost") final int idPost) {
+		postsService.deletePost(idPost);
+	}
+	
+	
+	@GetMapping("/PostSignaledOnce/{trueSignalOnce}")
+	public Iterable<Posts> getAllPostSignaledOnce(@PathVariable("trueSignalOnce") final Boolean trueSignalOnce){
+		return postsService.getPostSignaledOnce(trueSignalOnce);
+	}
+	
+	@GetMapping("/post/{idPost}/comments")
+	public List<Comment> getComment(@PathVariable("idPost") final int idPost) {
+		Optional<Posts> post = postsService.getPost(idPost);
+		if(post.isPresent()) {
+			return post.get().getComments();
+		} else {
+			return null;
+		}
+	}
+	
+
+	@PutMapping(path="/signal/{idPost}")
+	public Posts updatePosts(@PathVariable("idPost") final int idPost, @RequestBody Posts posts) {
+		Optional<Posts> e = postsService.getPost(idPost);
+		if(e.isPresent()) {
+			Posts currentPosts = e.get();
+			
+			Boolean signalPost = posts.getSignalPost();
+			if(signalPost != null) {
+				currentPosts.setSignalPost(signalPost);
+			}
+			Boolean signalPostOnce = posts.getSignalPostOnce();
+			if(signalPostOnce != null) {
+				currentPosts.setSignalPostOnce(signalPostOnce);
+			}
+			postsService.savePost(currentPosts);
+			return currentPosts;
+		} else {
+			return null;
+		}
+	}	
+	
+	@PutMapping(path="/addLike/{idPost}")
+	public Posts addLike(@PathVariable("idPost") final int idPost, @RequestBody Posts post) {
+		Optional<Posts> e = postsService.getPost(idPost);
+		if(e.isPresent()) {
+			Posts currentPost = e.get();
+			int likeCounter = post.getLikeCounter() + currentPost.getLikeCounter();
+			currentPost.setLikeCounter(likeCounter);
+			postsService.savePost(currentPost);
+			return currentPost;
+		} else {
+			return null;
+		}
+	}
+	
+	
+
+}

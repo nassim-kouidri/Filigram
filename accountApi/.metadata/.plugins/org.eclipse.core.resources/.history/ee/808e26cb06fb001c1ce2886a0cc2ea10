@@ -1,0 +1,52 @@
+package com.Service;
+
+import java.util.List;
+import java.util.Optional;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+import com.Modele.Comment;
+import com.Modele.Message;
+import com.Repository.CommentRepository;
+import com.Repository.PostsRepository;
+
+
+@Service
+public class PostsService {
+	
+	@Autowired
+	PostsRepository postsRepository;
+	
+	@Autowired
+	CommentRepository commentRepository;
+	
+	public Iterable<Message> getAllPost(){
+		return postsRepository.findAll();
+	}
+	
+	public Message savePost(Message post) {
+		Message savePost = postsRepository.save(post);
+		return savePost;
+	}
+	
+	public Optional<Message> getPost(final int id) {
+        return postsRepository.findById(id);
+    }
+	
+	public List<Message> getPostSignaled(final Boolean id) {
+        return postsRepository.findPostBySignalPost(id);
+    }
+	
+	public Optional<Comment> getComments(final int id){
+		return commentRepository.findById(id);
+		
+	}
+
+	public void deletePost(final int idPost) {
+		  postsRepository.deleteById(idPost);
+	    }
+	
+	
+
+}
